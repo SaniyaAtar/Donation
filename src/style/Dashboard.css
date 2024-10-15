@@ -1,0 +1,44 @@
+.dashboard-container {
+    display: flex;
+  }
+  .sidebar {
+    width: 250px;
+    background: #f4f4f4;
+    height: 100vh;
+    padding: 20px;
+  }
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  .sidebar ul li {
+    margin: 20px 0;
+  }
+  .content {
+    flex-grow: 1;
+    padding: 20px;
+  }
+  .referral-section {
+    margin-top: 50px;
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  button {
+    margin: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+  @media (max-width: 768px) {
+    .dashboard-container {
+      flex-direction: column;
+    }
+    .sidebar {
+      width: 100%;
+      height: auto;
+    }
+    .content {
+      padding: 10px;
+    }
+  }
+  
