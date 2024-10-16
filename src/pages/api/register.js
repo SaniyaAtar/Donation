@@ -1,5 +1,6 @@
 import dbConnect from '../../../src/utils/dbConnect'; // Adjust the path as needed
 import User from '../../../src/models/User'; // Adjust the path as needed
+import bcrypt from 'bcrypt';
 import generateReferralCode from '../../../src/utils/generateReferralCode'; // Ensure the path is correct
 
 export default async function handler(req, res) {
@@ -14,6 +15,9 @@ export default async function handler(req, res) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         // Generate a referral code
         const referralCode = generateReferralCode(name);
 
@@ -21,7 +25,7 @@ export default async function handler(req, res) {
         const user = new User({
             name,
             email,
-            password, // Save the plain password directly
+            password: hashedPassword,
             phone,
             referralCode, // Save the generated referral code in the user document
         });

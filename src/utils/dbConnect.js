@@ -1,36 +1,18 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-    throw new Error('Please define the MONGODB_URI environment variable');
-}
-
-let cached = global.mongo;
-
-if (!cached) {
-    cached = global.mongo = { conn: null, promise: null };
-}
+const connection = {};
 
 async function dbConnect() {
-    if (cached.conn) {
-        return cached.conn;
+    if (connection.isConnected) {
+        return;
     }
 
-    if (!cached.promise) {
-        const opts = {
-            bufferCommands: false,
-        };
+    const db = await mongoose.connect(process.env.MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
 
-        cached.promise = mongoose.connect(MONGODB_URI, opts)
-            .then((mongoose) => mongoose)
-            .catch((error) => {
-                console.error('MongoDB connection failed:', error);
-                throw new Error('MongoDB connection failed');
-            });
-    }
-    cached.conn = await cached.promise;
-    return cached.conn;
+    connection.isConnected = db.connections[0].readyState;
 }
 
-export default dbConnect;
+export { dbConnect as default, dbConnect };
