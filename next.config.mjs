@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    basePath: '/donation', // Replace with your repository name
-    assetPrefix: '/donation/', // Replace with your repository name
+    //output: 'export', // Add this line for static export
+    //basePath: '/donation', // Replace with your repository name if applicable
+    //assetPrefix: '/donation/', // Replace with your repository name if applicable
 };
 
 export default nextConfig;
