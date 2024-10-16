@@ -1,134 +1,133 @@
-// src/pages/donate.js
-import { useState } from 'react';
+// pages/donate.js
+import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useState } from 'react';
 import { useRouter } from 'next/router';
 
+// Load your publishable key from the .env file
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 const DonationForm = () => {
-    const [name, setName] = useState('');
-    const [amount, setAmount] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [showThankYou, setShowThankYou] = useState(false); // State for the thank you message
-    const stripe = useStripe();
-    const elements = useElements();
-    const router = useRouter();
+  const stripe = useStripe();
+  const elements = useElements();
+  const router = useRouter();
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [donorName, setDonorName] = useState('');
+  const [amount, setAmount] = useState('');
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError(null);
+    setSuccess(null);
 
-        if (!stripe || !elements) {
-            return; // Stripe.js has not yet loaded.
-        }
+    if (!stripe || !elements) {
+      return; // Stripe.js has not yet loaded.
+    }
 
-        const cardElement = elements.getElement(CardElement);
-        
-        // Get the referral code from the URL if it exists
-        const referralCode = router.query.referral || 'defaultReferralCode'; // Replace with a real default or empty string if you want
+    const cardElement = elements.getElement(CardElement);
+    const referralCode = router.query.referral || ''; // Use referral from URL
 
-        // Create a payment intent on your backend
-        const response = await fetch('/api/payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, amount, referral: referralCode }), // Send the referral code
-        });
+    setLoading(true);
+    try {
+      // Request the server to create a payment intent
+      const response = await fetch('/api/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ donorName, amount: Number(amount), referralCode }),
+      });
 
-        const { clientSecret } = await response.json();
+      const data = await response.json();
 
-        setLoading(true);
+      if (!response.ok) {
+        throw new Error(data.message || 'Server error during payment intent creation');
+      }
 
-        try {
-            const result = await stripe.confirmCardPayment(clientSecret, {
-                payment_method: {
-                    card: cardElement,
-                    billing_details: {
-                        name,
-                    },
-                },
-            });
+      const { clientSecret } = data; // Get the client secret from the server response
 
-            if (result.error) {
-                console.error(result.error.message);
-            } else {
-                if (result.paymentIntent.status === 'succeeded') {
-                    console.log('Donation successful!');
-                    setShowThankYou(true); // Show thank you message
-                    setTimeout(() => {
-                        router.push('/'); // Redirect to home page after 3 seconds
-                    }, 3000);
-                }
-            }
-        } catch (error) {
-            console.error("Payment confirmation error:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+      // Confirm the payment using Stripe.js
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: donorName,
+          },
+        },
+      });
 
-    return (
-        <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold text-center mb-4">Make a Donation</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                    <label htmlFor="name" className="block text-gray-700 font-semibold mb-1">Name</label>
-                    <input
-                        id="name"
-                        type="text"
-                        placeholder="Your Name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
-                <div className="mb-4">
-                    <label htmlFor="amount" className="block text-gray-700 font-semibold mb-1">Amount</label>
-                    <input
-                        id="amount"
-                        type="number"
-                        placeholder="Amount in USD"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        required
-                        className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700 font-semibold mb-1">Card Details</label>
-                    <CardElement className="border border-gray-300 p-2 rounded" />
-                </div>
-                <button 
-                    type="submit" 
-                    disabled={!stripe || loading} 
-                    className={`w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition duration-200 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                    {loading ? 'Processing...' : 'Donate'}
-                </button>
-            </form>
+      if (result.error) {
+        // Show error to the customer (e.g., insufficient funds)
+        setError(result.error.message);
+        console.error(result.error.message);
+      } else if (result.paymentIntent.status === 'succeeded') {
+        setSuccess('Thank you for your donation!');
+        setTimeout(() => router.push('/'), 3000); // Redirect after 3 seconds
+      }
+    } catch (error) {
+      console.error("Payment confirmation error:", error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            {showThankYou && ( // Conditional rendering for thank you message
-                <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-                        <h3 className="text-lg font-semibold mb-2">Thank You for Your Donation!</h3>
-                        <p>Your contribution is greatly appreciated.</p>
-                        <button 
-                            onClick={() => setShowThankYou(false)} 
-                            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+  return (
+    <form onSubmit={handleSubmit} className="p-4 space-y-4">
+      <div>
+        <label className="block text-gray-700" htmlFor="donorName">
+          Your Name
+        </label>
+        <input
+          type="text"
+          id="donorName"
+          value={donorName}
+          onChange={(e) => setDonorName(e.target.value)}
+          className="w-full p-2 border rounded"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-gray-700" htmlFor="amount">
+          Donation Amount (in USD)
+        </label>
+        <input
+          type="number"
+          id="amount"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-full p-2 border rounded"
+          required
+        />
+      </div>
+      <div role="group" aria-labelledby="card-details">
+        <label id="card-details" htmlFor="card-element" className="block text-gray-700">
+          Card Details
+        </label>
+        <CardElement className="p-2 border rounded" />
+      </div>
+      <button 
+        type="submit" 
+        disabled={!stripe || loading} 
+        className={`px-4 py-2 text-white rounded ${loading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-700'}`}
+      >
+        {loading ? 'Processing...' : 'Donate'}
+      </button>
+      {error && <div className="text-red-600">{error}</div>}
+      {success && <div className="text-green-600">{success}</div>}
+    </form>
+  );
 };
 
-const DonatePage = () => (
+const DonatePage = () => {
+  return (
     <Elements stripe={stripePromise}>
+      <div className="max-w-md mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Make a Donation</h1>
         <DonationForm />
+      </div>
     </Elements>
-);
+  );
+};
 
 export default DonatePage;

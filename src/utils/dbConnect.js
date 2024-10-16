@@ -1,4 +1,3 @@
-// src/utils/dbConnect.js
 import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -23,9 +22,12 @@ async function dbConnect() {
             bufferCommands: false,
         };
 
-        cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-            return mongoose;
-        });
+        cached.promise = mongoose.connect(MONGODB_URI, opts)
+            .then((mongoose) => mongoose)
+            .catch((error) => {
+                console.error('MongoDB connection failed:', error);
+                throw new Error('MongoDB connection failed');
+            });
     }
     cached.conn = await cached.promise;
     return cached.conn;
