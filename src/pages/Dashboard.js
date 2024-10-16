@@ -1,4 +1,5 @@
 // src/pages/dashboard.js
+
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 
@@ -6,19 +7,19 @@ export default function Dashboard() {
     const { data: session } = useSession();
     const [referralCode, setReferralCode] = useState(""); 
     const [totalDonations, setTotalDonations] = useState(0); 
-    const [donorDetails, setDonorDetails] = useState([]); // Ensure this is initialized as an empty array
+    const [donorDetails, setDonorDetails] = useState([]); 
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const response = await fetch(`/api/dashboard?userId=${session.user.id}`);
+                const response = await fetch(`/api/dashboard`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch dashboard data');
                 }
                 const data = await response.json();
                 setReferralCode(data.referralCode);
                 setTotalDonations(data.totalDonations);
-                setDonorDetails(data.donorDetails || []); // Set donor details or default to an empty array
+                setDonorDetails(data.donorDetails || []); 
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
             }
@@ -29,7 +30,6 @@ export default function Dashboard() {
         }
     }, [session]);
 
-    // Copy the donation link to the clipboard
     const copyToClipboard = () => {
         const donationLink = `${window.location.origin}/donate?referral=${referralCode}`;
         navigator.clipboard.writeText(donationLink)
@@ -41,7 +41,6 @@ export default function Dashboard() {
             });
     };
 
-    // Share the donation link on WhatsApp
     const shareOnWhatsApp = () => {
         const donationLink = `${window.location.origin}/donate?referral=${referralCode}`;
         const message = `Join me in supporting a great cause! Donate here: ${donationLink}`;
@@ -62,18 +61,17 @@ export default function Dashboard() {
                     <p className="text-lg font-medium">{totalDonations} Donations made via your referral code!</p>
                 </div>
 
-                {/* Display donor details */}
                 <div className="bg-gray-200 rounded-md p-4 mb-4">
                     <h2 className="text-xl font-semibold text-gray-700">Donors Using Your Referral Code</h2>
                     <ul>
-                        {Array.isArray(donorDetails) && donorDetails.length > 0 ? ( // Check if donorDetails is an array and has items
+                        {Array.isArray(donorDetails) && donorDetails.length > 0 ? (
                             donorDetails.map((donor, index) => (
                                 <li key={index} className="text-lg font-medium">
                                     {donor.name} donated ${donor.amount} on {new Date(donor.createdAt).toLocaleDateString()}
                                 </li>
                             ))
                         ) : (
-                            <li className="text-lg font-medium">No donors yet.</li> // Fallback message
+                            <li className="text-lg font-medium">No donors yet.</li>
                         )}
                     </ul>
                 </div>
