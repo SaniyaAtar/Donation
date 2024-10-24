@@ -44,7 +44,7 @@ export default function Home() {
     <div className="flex flex-col h-screen">
       {/* Navigation Bar */}
       <div className="flex justify-between items-center bg-gray-800 text-white p-4">
-        <h1 className="text-2xl font-bold">Nayanpankh</h1>
+        <h1 className="text-2xl font-bold">Donate  Gift of Kindness</h1>
         <div className="flex items-center space-x-4">
           {/* Display initial letter of user */}
           <div className="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center text-white font-bold">
@@ -91,9 +91,9 @@ export default function Home() {
         <div className="flex-1 flex flex-col items-center justify-center bg-gray-100 relative">
           <img src={currentImage.src} alt="Main Image" className="w-full h-auto object-cover" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white bg-black bg-opacity-50">
-            <h2 className="text-3xl font-bold mb-2">Welcome, {userName}</h2>
-            <p className="mb-4">
-              Initial push is the toughest! Go through the learning modules, or reach out to your fundraising manager to level up.
+            <h2 className="text-5xl font-bold mb-2">Welcome, {userName}</h2>
+            <p className="mb-6 text-3xl">
+            "Brighten the World with One Smile – Your Donation Makes It Beautiful."
             </p>
           </div>
         </div>
